@@ -287,3 +287,25 @@ test('a history file that Claude Code is writing is left alone, and the move say
     await w.cleanup()
   }
 })
+
+test('a project folder moved by hand: the file is already in the new folder, only its rows change', async () => {
+  const { w, t, ctx } = await world()
+  try {
+    const x = join(w.work, 'old-name')
+    const y = await w.folder('new-name')
+    const { file } = await w.session(A, { cwds: [x], projectFolder: y })
+    const before = await rows(file)
+    const plan = await makePlan({ kind: 'move', ids: [A], to: y }, ctx)
+    assert.equal(plan.ok, true, describePlan(plan))
+    const done = await confirm({ kind: 'move', ids: [A], to: y }, plan.code, ctx)
+    assert.equal(done.ok, true, JSON.stringify(done))
+    const after = await rows(file)
+    assert.equal(after.length, before.length)
+    assert.equal(after.every(r => !r.cwd || r.cwd === y), true, 'every row now names the new folder')
+    assert.equal(t.sent.length, 1, 'the old file went to the trash, not away for good')
+    assert.equal((await listSessions({ claudeDir: w.claudeDir, platform: process.platform })).find(s => s.id === A).folder, y)
+    assert.equal((await makePlan({ kind: 'move', ids: [A], to: y }, ctx)).items[0].problems.join(), 'it is already in that folder')
+  } finally {
+    await w.cleanup()
+  }
+})

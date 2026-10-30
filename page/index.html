@@ -76,7 +76,12 @@ a.btn { display: inline-flex; align-items: center; text-decoration: none }
 .chip.live { background: var(--ink); color: var(--ground) }
 .row { display: flex; align-items: center; gap: 10px 14px; flex-wrap: wrap; padding: 10px 2px; border-bottom: 1px solid var(--line) }
 .row:hover { background: color-mix(in srgb, var(--sunk) 60%, transparent) }
-.row .check { flex: none; width: 18px; height: 18px }
+.row .check { flex: none }
+input[type="checkbox"] { appearance: none; -webkit-appearance: none; flex: none; width: 18px; height: 18px; margin: 0; border: 1.5px solid var(--line-2); border-radius: 5px; background: var(--panel) center / 12px no-repeat; cursor: pointer; transition: background-color .12s, border-color .12s }
+input[type="checkbox"]:hover { border-color: var(--clay) }
+input[type="checkbox"]:checked { background-color: var(--clay); border-color: var(--clay); background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M2.5 6.2l2.4 2.4 4.6-5'/%3E%3C/svg%3E") }
+input[type="checkbox"]:indeterminate { background-color: var(--clay); border-color: var(--clay); background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' stroke='white' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='M3 6h6'/%3E%3C/svg%3E") }
+@media (prefers-reduced-motion: reduce) { input[type="checkbox"] { transition: none } }
 .row .main { flex: 1 1 320px; min-width: 0 }
 .row .name { font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
 .row .meta { display: flex; flex-wrap: wrap; gap: 2px 14px; color: var(--muted); font-size: 12.5px }
