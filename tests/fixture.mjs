@@ -1,8 +1,21 @@
 // A `.claude` folder made for a test: real folders for the projects, transcripts that look like Claude Code's.
-import { mkdtemp, mkdir, writeFile, rm } from 'node:fs/promises'
+import { mkdtemp, mkdir, rename, writeFile, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
-import { join } from 'node:path'
+import { basename, join } from 'node:path'
 import { slugOf } from '../lib/paths.mjs'
+
+/** A stand-in for the system's trash: the paths are moved into a folder, so a test can see what was "trashed". */
+export const fakeTrash = folder => {
+  const sent = []
+  const trash = async paths => {
+    await mkdir(folder, { recursive: true })
+    for (const path of paths) {
+      await rename(path, join(folder, `${sent.length}-${basename(path)}`))
+      sent.push(path)
+    }
+  }
+  return { trash, sent }
+}
 
 export async function makeWorld() {
   const root = await mkdtemp(join(tmpdir(), 'session-manager-'))
@@ -44,6 +57,17 @@ export async function makeWorld() {
   /** `sessions/<pid>.json`, the file a running Claude Code process leaves. */
   const process_ = async (pid, sessionId) => writeFile(join(claudeDir, 'sessions', `${pid}.json`), JSON.stringify({ pid, sessionId, kind: 'interactive' }))
 
+  /** `history.jsonl`, the prompt history Claude Code keeps, one row per prompt with the project it was typed in. */
+  const history = rows => writeFile(join(claudeDir, 'history.jsonl'), rows.map(r => JSON.stringify(r)).join('\n') + '\n')
+
+  /** The state a session keeps outside its project folder, by id. */
+  const state = async id => {
+    await mkdir(join(claudeDir, 'file-history', id), { recursive: true })
+    await writeFile(join(claudeDir, 'file-history', id, 'a@v1'), 'old file')
+    await mkdir(join(claudeDir, 'session-env', id), { recursive: true })
+    await writeFile(join(claudeDir, 'session-env', id, 'env'), 'x')
+  }
+
   const cleanup = () => rm(root, { recursive: true, force: true })
-  return { root, claudeDir, work, folder, session, process: process_, cleanup }
+  return { root, claudeDir, work, folder, session, process: process_, history, state, cleanup, trashDir: join(root, 'trash') }
 }
