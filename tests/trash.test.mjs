@@ -24,11 +24,24 @@ test('the Recycle Bin receives a file and a folder, with names that are not safe
   await writeFile(file, 'x')
   await mkdir(folder)
   await writeFile(join(folder, 'inner.txt'), 'y')
-  await sendToTrash([file, folder])
+  // Asked for on a machine with a Recycle Bin: the items must be in it. On CI the runner may have none, or one set to delete for
+  // good: then the call has to refuse before it deletes anything, which is the point of the check.
+  const strict = process.env.SESSION_MANAGER_REAL_TRASH === '1'
+  try {
+    await sendToTrash([file, folder])
+  } catch (error) {
+    assert.equal(strict, false, `a machine with a Recycle Bin must take them: ${error.message}`)
+    assert.match(error.message, /Recycle Bin|nothing was deleted/)
+    assert.equal(await there(file), true, 'refused: the file is still there')
+    assert.equal(await there(folder), true, 'refused: so is the folder')
+    return
+  }
   assert.equal(await there(file), false)
   assert.equal(await there(folder), false)
-  assert.equal(inRecycleBin(`${tag} file's & (odd).txt`), true, 'the file is in the Recycle Bin, not deleted for good')
-  assert.equal(inRecycleBin(`${tag} folder $x`), true, 'so is the folder')
+  if (strict) {
+    assert.equal(inRecycleBin(`${tag} file's & (odd).txt`), true, 'the file is in the Recycle Bin, not deleted for good')
+    assert.equal(inRecycleBin(`${tag} folder $x`), true, 'so is the folder')
+  }
 })
 
 test('a path that is not there stops nothing, and an empty list does nothing', { skip: !real, timeout: 60000 }, async () => {
