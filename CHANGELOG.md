@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.0
+
+- **Delete a whole project**: "Delete project…" on a group in the page, or `/sessions delete-project <folder>`. Every session of the folder and the project folder itself (`~/.claude/projects/<folder>`, with the memory it holds, which the preview names) go to the trash.
+- Deleting the last session of a project does the same: it is the whole project, so its project folder goes too. Deleting some of the sessions of a project only takes those.
+
 ## 0.1.1
 
 - A session whose file is already in the new folder's project folder (a project folder moved by hand) but whose rows still name the old folder can now be moved: only the rows change, the old file goes to the trash. Before, it was refused as "already in that folder".

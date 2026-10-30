@@ -275,7 +275,8 @@ dialog::backdrop { background: rgba(20, 20, 19, 0.45) }
       g.state === 'unknown' ? h('span', { class: 'chip', title: 'No folder is recorded, or its drive is not here: never counted as an orphan' }, 'unknown folder') : null,
       h('span', { class: 'chip num' }, plural(g.items.length, 'session', 'sessions')),
       h('span', { class: 'chip num' }, bytes(g.bytes)),
-      g.folder ? h('button', { class: 'btn sm', type: 'button', title: 'Move every session of this project to another folder', on: { click: function () { askMoveProject(g.folder, g.items.length) } } }, 'Move project…') : null)
+      g.folder ? h('button', { class: 'btn sm', type: 'button', title: 'Move every session of this project to another folder', on: { click: function () { askMoveProject(g.folder, g.items.length) } } }, 'Move project…') : null,
+      g.folder ? h('button', { class: 'btn sm', type: 'button', title: 'Delete every session of this project and its project folder', on: { click: function () { change({ kind: 'delete-project', from: g.folder }) } } }, 'Delete project…') : null)
     return h('section', { class: 'group' }, head, g.items.map(rowFor))
   }
   function render() {
@@ -332,6 +333,7 @@ dialog::backdrop { background: rgba(20, 20, 19, 0.45) }
   function headingFor(plan) {
     var n = plan.items.length
     if (plan.kind === 'prune') return 'Delete ' + plural(n, 'orphan session', 'orphan sessions') + '?'
+    if (plan.kind === 'delete-project') return 'Delete this whole project (' + plural(n, 'session', 'sessions') + ')?'
     if (plan.kind === 'delete') return 'Delete ' + plural(n, 'session', 'sessions') + '?'
     return 'Move ' + plural(n, 'session', 'sessions') + '?'
   }
@@ -347,6 +349,10 @@ dialog::backdrop { background: rgba(20, 20, 19, 0.45) }
           h('div', { class: 'p' }, i.id.slice(0, 8) + ' · ' + bytes(i.bytes) + ' · ' + (i.folder || 'no folder') + (moving ? '  →  ' + i.toFolder : '')),
           i.problems.map(function (p) { return h('div', { class: 'bad' }, 'Cannot: ' + p) }))
       }))
+      var wholeDirs = (plan.projectDirs || []).map(function (d) {
+        return h('div', { class: 'item' }, h('div', { class: 't' }, 'The whole project folder ' + d.project), h('div', { class: 'p' }, d.extras.length ? 'It also holds: ' + d.extras.join(', ') + '.' : 'Nothing else is in it.'))
+      })
+      if (wholeDirs.length) items.appendChild(h('div', {}, wholeDirs))
       var note = moving
         ? 'The rows of each session will point to the new folder. The new copy is written and checked first; only then does the old one go to the ' + trashName() + '.'
         : 'They go to the ' + trashName() + ', so you can put them back from there. Their saved file history goes with them.'
@@ -361,7 +367,7 @@ dialog::backdrop { background: rgba(20, 20, 19, 0.45) }
     api('api/apply', { request: request, code: plan.code }).then(function (r) {
       var res = r.data
       var failed = (res.results || []).filter(function (x) { return !x.ok })
-      if (r.ok && res.ok) { closeDialog(); toast(plural((res.results || []).length, 'session', 'sessions') + ' done.'); state.selected = {}; return load() }
+      if (r.ok && res.ok) { closeDialog(); toast(plural((res.results || []).filter(function (x) { return x.id !== 'project-folder' }).length, 'session', 'sessions') + ' done.'); state.selected = {}; return load() }
       var lines = res.error ? [h('div', { class: 'errors' }, res.error)] : []
       failed.forEach(function (x) { lines.push(h('div', { class: 'errors' }, x.id.slice(0, 8) + ': ' + x.message)) })
       openDialog([title('Not everything was done'), h('p', {}, (res.results || []).filter(function (x) { return x.ok }).length + ' done before it stopped.')].concat(lines, [h('div', { class: 'foot' }, h('button', { class: 'btn', type: 'button', on: { click: closeDialog } }, 'Close'))]))

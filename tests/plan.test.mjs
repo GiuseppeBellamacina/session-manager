@@ -309,3 +309,38 @@ test('a project folder moved by hand: the file is already in the new folder, onl
     await w.cleanup()
   }
 })
+
+test('the last session of a project takes the whole project folder with it, and a project can be deleted at once', async () => {
+  const { w, t, ctx } = await world()
+  try {
+    const f = await w.folder('solo')
+    const g = await w.folder('pair')
+    const solo = await w.session(A, { cwds: [f], side: true })
+    await mkdir(join(solo.file, '..', 'memory'))
+    await writeFile(join(solo.file, '..', 'memory', 'MEMORY.md'), 'x')
+    const one = await w.session(B, { cwds: [g] })
+    await w.session(C, { cwds: [g] })
+
+    // One of two: only that session goes. The only one: its project folder goes, with the memory it holds.
+    const some = await makePlan({ kind: 'delete', ids: [B] }, ctx)
+    assert.deepEqual(some.projectDirs, [])
+    const last = await makePlan({ kind: 'delete', ids: [A] }, ctx)
+    assert.equal(last.projectDirs.length, 1)
+    assert.deepEqual(last.projectDirs[0].extras, ['memory'])
+    assert.match(describePlan(last), /whole project folder.*memory/)
+    assert.equal(last.items[0].paths.includes(solo.file), false, 'the folder goes as one, not file by file')
+
+    const done = await confirm({ kind: 'delete', ids: [A] }, last.code, ctx)
+    assert.equal(done.ok, true, JSON.stringify(done))
+    assert.equal(await there(join(solo.file, '..')), false)
+    assert.equal(t.sent.includes(join(solo.file, '..')), true, 'sent to the trash')
+
+    const whole = await makePlan({ kind: 'delete-project', from: g }, ctx)
+    assert.equal(whole.items.length, 2)
+    assert.equal(whole.projectDirs.length, 1)
+    assert.equal((await confirm({ kind: 'delete-project', from: g }, whole.code, ctx)).ok, true)
+    assert.equal(await there(join(one.file, '..')), false)
+  } finally {
+    await w.cleanup()
+  }
+})

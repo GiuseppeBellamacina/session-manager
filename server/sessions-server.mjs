@@ -12,7 +12,7 @@ import { confirm, defaultContext, describePlan, makePlan } from '../lib/plan.mjs
 
 const IDLE_MS = 30 * 60 * 1000
 const MAX_BODY = 64 * 1024
-const KINDS = new Set(['delete', 'prune', 'move', 'move-project'])
+const KINDS = new Set(['delete', 'prune', 'delete-project', 'move', 'move-project'])
 const ID = /^[0-9a-f-]{8,64}$/i
 
 const sanitize = s => ({ id: s.id, project: s.project, folder: s.folder, folderState: s.folderState, title: s.title, branch: s.branch, lastActivity: s.lastActivity, bytes: s.bytes, inUse: s.inUse })
@@ -32,6 +32,7 @@ export function parseRequest(value) {
   }
   if ((request.kind === 'delete' || request.kind === 'move') && !request.ids?.length) return undefined
   if ((request.kind === 'move' || request.kind === 'move-project') && !request.to) return undefined
+  if (request.kind === 'delete-project' && !request.from) return undefined
   if (request.kind === 'move-project' && !request.from) return undefined
   return request
 }

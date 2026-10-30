@@ -47,6 +47,7 @@ Nothing is done by a click on its own: each change opens a window with what it w
 | `/sessions prune` | Sends the orphans to the trash. |
 | `/sessions delete <id>...` | Sends sessions to the trash. |
 | `/sessions move <id>... <folder>` | Moves sessions to the folder they live in now. |
+| `/sessions delete-project <folder>` | Sends every session of a project, and the project folder itself (with the memory it holds), to the trash. |
 | `/sessions move-project <old> <new>` | Moves every session of a project that moved from `<old>` to `<new>`. |
 
 Every change is a command twice: the first time it shows what it would do and the exact line to type to go on, ending in `yes <code>`; the second time, with the code, it does it.
