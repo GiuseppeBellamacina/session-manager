@@ -1,0 +1,396 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sessions</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 18 18'><rect x='2' y='3' width='14' height='3' rx='1' fill='%23141413'/><rect x='2' y='8' width='14' height='3' rx='1' fill='%23D97757'/><rect x='2' y='13' width='9' height='2' rx='1' fill='%238A8780'/></svg>">
+<style>
+/* The same paper, ink and clay as omniboard: warm neutrals, clay only for what needs a look, serif for titles. */
+:root {
+  --ground: #FAF9F5; --panel: #FFFFFF; --sunk: #F4F2EB; --line: #E6E3D8; --line-2: #D2CEC1;
+  --ink: #141413; --ink-2: #3D3D3A; --muted: #6B6A64; --ring-off: #B3AFA2;
+  --clay: #D97757; --clay-ink: #A84B2A; --clay-wash: #FBF0EA; --clay-edge: #EBC3B0; --chip: #EFECE3;
+  --danger: #A8342A; --danger-wash: #FBEDEA; --shadow: rgba(20, 20, 19, 0.22);
+  --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, ui-serif, serif;
+  --font-ui: "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system, "Helvetica Neue", sans-serif;
+  --font-mono: "Cascadia Mono", "Cascadia Code", ui-monospace, "SFMono-Regular", Consolas, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --ground: #1A1918; --panel: #242321; --sunk: #1F1E1C; --line: #34322E; --line-2: #4C4943;
+  --ink: #F5F4EE; --ink-2: #D6D3C9; --muted: #A3A096; --ring-off: #6E6A62;
+  --clay: #D97757; --clay-ink: #E08B6E; --clay-wash: #2E2420; --clay-edge: #5A3A2E; --chip: #2E2C29;
+  --danger: #E57A6E; --danger-wash: #331F1C; --shadow: rgba(0, 0, 0, 0.5);
+  color-scheme: dark } }
+:root[data-theme="dark"] {
+  --ground: #1A1918; --panel: #242321; --sunk: #1F1E1C; --line: #34322E; --line-2: #4C4943;
+  --ink: #F5F4EE; --ink-2: #D6D3C9; --muted: #A3A096; --ring-off: #6E6A62;
+  --clay: #D97757; --clay-ink: #E08B6E; --clay-wash: #2E2420; --clay-edge: #5A3A2E; --chip: #2E2C29;
+  --danger: #E57A6E; --danger-wash: #331F1C; --shadow: rgba(0, 0, 0, 0.5);
+  color-scheme: dark }
+* { box-sizing: border-box }
+html, body { margin: 0 }
+body { background: var(--ground); color: var(--ink); font: 14px/1.5 var(--font-ui) }
+button, input, select { font: inherit; color: inherit }
+button { cursor: pointer }
+:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px }
+[hidden] { display: none !important }
+.mono { font-family: var(--font-mono); font-size: 11.5px }
+.num { font-variant-numeric: tabular-nums }
+.serif { font-family: var(--serif); font-weight: 400; letter-spacing: -0.01em }
+.eyebrow { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); font-weight: 600 }
+.dim { color: var(--muted) }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap }
+
+.top { position: sticky; top: 0; z-index: 5; background: color-mix(in srgb, var(--ground) 92%, transparent); backdrop-filter: blur(8px); border-bottom: 1px solid var(--line) }
+.top-in { max-width: 1080px; margin-inline: auto; padding: 12px 24px; display: flex; align-items: center; gap: 10px 24px; flex-wrap: wrap }
+.brand { display: flex; align-items: center; gap: 10px; font-size: 20px }
+.tools { margin-left: auto; display: flex; align-items: center; gap: 12px; flex-wrap: wrap }
+.seg { display: flex; padding: 3px; border-radius: 9px; background: var(--sunk); border: 1px solid var(--line) }
+.seg button { background: none; border: 0; padding: 4px 11px; min-height: 30px; border-radius: 6px; color: var(--muted); font-size: 13px }
+.seg button[aria-pressed="true"] { background: var(--panel); color: var(--ink); box-shadow: 0 1px 2px var(--shadow) }
+
+.wrap { max-width: 1080px; margin-inline: auto; padding: 36px 24px 96px }
+.title { margin: 6px 0 0; font-size: 34px; line-height: 1.15 }
+.lead { margin: 10px 0 0; max-width: 62ch; color: var(--ink-2) }
+.bar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; margin: 26px 0 18px }
+.search { flex: 1 1 260px; min-height: 38px; padding: 7px 12px; border: 1px solid var(--line-2); border-radius: 9px; background: var(--panel) }
+select { min-height: 38px; padding: 6px 10px; border: 1px solid var(--line-2); border-radius: 9px; background: var(--panel) }
+.btn { min-height: 36px; padding: 6px 14px; border-radius: 9px; border: 1px solid var(--line-2); background: var(--panel); color: var(--ink) }
+.btn:hover { background: var(--sunk) }
+.btn.clay { border-color: var(--clay-edge); background: var(--clay-wash); color: var(--clay-ink) }
+.btn.primary { background: var(--ink); color: var(--ground); border-color: var(--ink) }
+.btn.danger { background: var(--danger); color: #fff; border-color: var(--danger) }
+.btn[disabled] { opacity: 0.45; cursor: default }
+.btn.sm { min-height: 30px; padding: 3px 10px; font-size: 13px }
+a.btn { display: inline-flex; align-items: center; text-decoration: none }
+.btn.ghost { border-color: transparent; background: none; color: var(--ink-2) }
+.btn.ghost:hover { background: var(--sunk) }
+
+.group { margin-top: 22px }
+.group-head { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 12px; padding: 8px 2px; border-bottom: 1px solid var(--line) }
+.group-head .path { font-family: var(--font-mono); font-size: 12.5px; overflow-wrap: anywhere; flex: 1 1 300px }
+.chip { display: inline-flex; align-items: center; padding: 1px 8px; border-radius: 99px; background: var(--chip); color: var(--ink-2); font-size: 12px; white-space: nowrap }
+.chip.clay { background: var(--clay-wash); color: var(--clay-ink); box-shadow: inset 0 0 0 1px var(--clay-edge) }
+.chip.live { background: var(--ink); color: var(--ground) }
+.row { display: flex; align-items: center; gap: 10px 14px; flex-wrap: wrap; padding: 10px 2px; border-bottom: 1px solid var(--line) }
+.row:hover { background: color-mix(in srgb, var(--sunk) 60%, transparent) }
+.row .check { flex: none; width: 18px; height: 18px }
+.row .main { flex: 1 1 320px; min-width: 0 }
+.row .name { font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+.row .meta { display: flex; flex-wrap: wrap; gap: 2px 14px; color: var(--muted); font-size: 12.5px }
+.row .acts { display: flex; gap: 4px; flex-wrap: wrap }
+.empty { padding: 40px 0; text-align: center; color: var(--muted) }
+.selbar { position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: var(--ink); color: var(--ground); border-radius: 12px; box-shadow: 0 6px 24px var(--shadow); z-index: 6; flex-wrap: wrap; max-width: calc(100vw - 24px) }
+.selbar .btn { background: transparent; color: var(--ground); border-color: color-mix(in srgb, var(--ground) 40%, transparent) }
+.selbar .btn:hover { background: color-mix(in srgb, var(--ground) 14%, transparent) }
+
+dialog { border: 1px solid var(--line-2); border-radius: 14px; background: var(--panel); color: var(--ink); padding: 0; width: min(640px, calc(100vw - 24px)); box-shadow: 0 18px 60px var(--shadow) }
+dialog::backdrop { background: rgba(20, 20, 19, 0.45) }
+.dlg { padding: 22px 24px 18px; display: flex; flex-direction: column; gap: 12px }
+.dlg h2 { margin: 0; font-size: 22px; line-height: 1.2 }
+.dlg p { margin: 0; color: var(--ink-2) }
+.dlg input[type="text"] { min-height: 38px; padding: 7px 12px; border: 1px solid var(--line-2); border-radius: 9px; background: var(--ground); width: 100% }
+.dlg .list { max-height: 260px; overflow: auto; border: 1px solid var(--line); border-radius: 10px; background: var(--sunk) }
+.dlg .item { padding: 8px 12px; border-bottom: 1px solid var(--line); font-size: 13px }
+.dlg .item:last-child { border-bottom: 0 }
+.dlg .item .t { font-weight: 500; overflow-wrap: anywhere }
+.dlg .item .p { font-family: var(--font-mono); font-size: 11.5px; color: var(--muted); overflow-wrap: anywhere }
+.dlg .bad { color: var(--danger); font-size: 12.5px }
+.dlg .notice { padding: 10px 12px; border-radius: 10px; background: var(--clay-wash); color: var(--clay-ink); box-shadow: inset 0 0 0 1px var(--clay-edge) }
+.dlg .errors { padding: 10px 12px; border-radius: 10px; background: var(--danger-wash); color: var(--danger) }
+.dlg .foot { display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap; padding-top: 4px }
+#toast { position: fixed; right: 16px; bottom: 16px; display: flex; flex-direction: column; gap: 8px; z-index: 20; max-width: min(420px, calc(100vw - 32px)) }
+.toast { padding: 10px 14px; border-radius: 10px; background: var(--ink); color: var(--ground); box-shadow: 0 6px 24px var(--shadow); font-size: 13.5px }
+@media (max-width: 640px) { .wrap { padding-inline: 16px } .title { font-size: 28px } }
+</style>
+</head>
+<body>
+<header class="top"><div class="top-in">
+  <div class="brand serif"><svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><rect x="2" y="3" width="14" height="3" rx="1" fill="var(--ink)"/><rect x="2" y="8" width="14" height="3" rx="1" fill="var(--clay)"/><rect x="2" y="13" width="9" height="2" rx="1" fill="var(--ring-off)"/></svg>Sessions</div>
+  <div class="tools">
+    <span class="dim" id="conn" aria-live="polite"></span>
+    <button class="btn sm" id="refresh" type="button">Refresh</button>
+    <div class="seg" role="group" aria-label="Theme">
+      <button type="button" data-theme-set="auto" aria-pressed="true">Auto</button>
+      <button type="button" data-theme-set="light" aria-pressed="false">Light</button>
+      <button type="button" data-theme-set="dark" aria-pressed="false">Dark</button>
+    </div>
+  </div>
+</div></header>
+
+<main class="wrap">
+  <p class="eyebrow">Claude Code</p>
+  <h1 class="title serif">Every session on this computer</h1>
+  <p class="lead" id="summary">Loading…</p>
+
+  <div class="bar" role="search">
+    <label class="sr" for="q">Search</label>
+    <input class="search" id="q" type="search" placeholder="Search a title, a folder, an id or a branch" autocomplete="off">
+    <div class="seg" role="group" aria-label="Show">
+      <button type="button" data-filter="all" aria-pressed="true">All</button>
+      <button type="button" data-filter="orphans" aria-pressed="false">Orphans</button>
+      <button type="button" data-filter="unknown" aria-pressed="false">Unknown folder</button>
+    </div>
+    <label class="sr" for="sort">Sort by</label>
+    <select id="sort"><option value="recent">Latest first</option><option value="size">Largest first</option></select>
+    <button class="btn clay" id="prune" type="button" hidden></button>
+  </div>
+
+  <div id="list"></div>
+</main>
+
+<div class="selbar" id="selbar" hidden role="region" aria-label="Selected sessions">
+  <span id="selcount"></span>
+  <button class="btn sm" id="selmove" type="button">Move…</button>
+  <button class="btn sm" id="seldelete" type="button">Delete…</button>
+  <button class="btn sm" id="selclear" type="button">Clear</button>
+</div>
+
+<dialog id="dlg" aria-labelledby="dlg-title"><div class="dlg" id="dlg-body"></div></dialog>
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function () {
+  'use strict'
+  var state = { sessions: [], filter: 'all', sort: 'recent', q: '', selected: {}, platform: '', orphans: 0, loaded: false }
+  var $ = function (id) { return document.getElementById(id) }
+
+  // Everything that comes from disk (a title is what someone typed, a path is a path) is put in the page as text, never as markup.
+  function h(tag, attrs) {
+    var el = document.createElement(tag)
+    Object.keys(attrs || {}).forEach(function (k) {
+      if (k === 'class') el.className = attrs[k]
+      else if (k === 'on') Object.keys(attrs.on).forEach(function (ev) { el.addEventListener(ev, attrs.on[ev]) })
+      else if (attrs[k] === true) el.setAttribute(k, '')
+      else if (attrs[k] !== false && attrs[k] != null) el.setAttribute(k, attrs[k])
+    })
+    var add = function (c) {
+      if (c == null || c === false) return
+      if (Array.isArray(c)) return c.forEach(add)
+      el.appendChild(typeof c === 'string' || typeof c === 'number' ? document.createTextNode(String(c)) : c)
+    }
+    for (var i = 2; i < arguments.length; i++) add(arguments[i])
+    return el
+  }
+  function bytes(n) { return n >= 1e9 ? (n / 1e9).toFixed(1) + ' GB' : n >= 1e6 ? (n / 1e6).toFixed(1) + ' MB' : Math.max(1, Math.round(n / 1e3)) + ' KB' }
+  function ago(ms) {
+    var s = Math.max(0, (Date.now() - ms) / 1000)
+    if (s < 90) return 'just now'
+    if (s < 5400) return Math.round(s / 60) + ' min ago'
+    if (s < 129600) return Math.round(s / 3600) + ' h ago'
+    if (s < 86400 * 45) return Math.round(s / 86400) + ' days ago'
+    return Math.round(s / (86400 * 30)) + ' months ago'
+  }
+  function plural(n, one, many) { return n + ' ' + (n === 1 ? one : many) }
+  var trashName = function () { return state.platform === 'win32' ? 'Recycle Bin' : 'Trash' }
+
+  // ---- talking to the server ----
+  function api(route, body) {
+    var init = body === undefined ? { cache: 'no-store' } : { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Session-Manager': '1' }, body: JSON.stringify(body) }
+    return fetch(route, init).then(function (r) { return r.json().then(function (j) { return { ok: r.ok, status: r.status, data: j } }) })
+  }
+  function toast(text) {
+    var el = h('div', { class: 'toast' }, text)
+    $('toast').appendChild(el)
+    setTimeout(function () { el.remove() }, 6000)
+  }
+  function load() {
+    return api('api/sessions').then(function (r) {
+      if (!r.ok) throw new Error('bad answer')
+      state.sessions = r.data.sessions
+      state.orphans = r.data.orphans
+      state.platform = r.data.platform
+      state.loaded = true
+      $('conn').textContent = ''
+      var live = {}
+      state.sessions.forEach(function (s) { live[s.id] = true })
+      Object.keys(state.selected).forEach(function (id) { if (!live[id]) delete state.selected[id] })
+      render()
+    }).catch(function () { $('conn').textContent = 'Not connected: reopen the page with /sessions' })
+  }
+
+  // ---- the list ----
+  function visible() {
+    var q = state.q.trim().toLowerCase()
+    return state.sessions.filter(function (s) {
+      if (state.filter === 'orphans' && s.folderState !== 'missing') return false
+      if (state.filter === 'unknown' && s.folderState !== 'unknown') return false
+      if (!q) return true
+      return (s.title + ' ' + s.folder + ' ' + s.id + ' ' + s.branch).toLowerCase().indexOf(q) >= 0
+    })
+  }
+  function groups(list) {
+    var by = {}
+    list.forEach(function (s) { (by[s.folder] = by[s.folder] || []).push(s) })
+    var out = Object.keys(by).map(function (folder) {
+      var items = by[folder].sort(function (a, b) { return state.sort === 'size' ? b.bytes - a.bytes : b.lastActivity - a.lastActivity })
+      return { folder: folder, items: items, state: items[0].folderState, last: Math.max.apply(null, items.map(function (s) { return s.lastActivity })), bytes: items.reduce(function (n, s) { return n + s.bytes }, 0) }
+    })
+    return out.sort(function (a, b) { return state.sort === 'size' ? b.bytes - a.bytes : b.last - a.last })
+  }
+  function openMenu(s) {
+    var vs = h('a', { class: 'btn sm ghost', href: 'vscode://anthropic.claude-code/open?session=' + encodeURIComponent(s.id), title: 'Opens it in the Claude Code panel of VS Code' }, 'VS Code')
+    var term = h('button', { class: 'btn sm ghost', type: 'button', title: 'A terminal in its folder with claude --resume', on: { click: function () { openTerminal(s) } } }, 'Terminal')
+    var copy = h('button', { class: 'btn sm ghost', type: 'button', title: 'Copy the command', on: { click: function () { copyCommand(s) } } }, 'Copy command')
+    return [vs, term, copy]
+  }
+  function command(s) { return (s.folder ? 'cd "' + s.folder + '" && ' : '') + 'claude --resume ' + s.id }
+  function copyText(text) {
+    if (navigator.clipboard && navigator.clipboard.writeText) return navigator.clipboard.writeText(text).then(function () { return true }, function () { return false })
+    return Promise.resolve(false)
+  }
+  function copyCommand(s) { copyText(command(s)).then(function (ok) { toast(ok ? 'Command copied.' : 'Could not copy: ' + command(s)) }) }
+  function openTerminal(s) {
+    api('api/open', { id: s.id }).then(function (r) {
+      if (r.data && r.data.ok) return toast('Opened a terminal in its folder.')
+      copyText(r.data && r.data.command ? r.data.command : command(s)).then(function (ok) { toast((r.data && r.data.message ? r.data.message : 'Could not open a terminal.') + (ok ? ' The command is copied.' : '')) })
+    })
+  }
+  function rowFor(s) {
+    var checked = !!state.selected[s.id]
+    var meta = h('div', { class: 'meta' },
+      h('span', { class: 'mono' }, s.id.slice(0, 8)),
+      s.branch ? h('span', { class: 'mono' }, s.branch) : null,
+      h('span', { class: 'num' }, ago(s.lastActivity)),
+      h('span', { class: 'num' }, bytes(s.bytes)))
+    return h('div', { class: 'row' },
+      h('input', { class: 'check', type: 'checkbox', checked: checked, 'aria-label': 'Select ' + (s.title || s.id.slice(0, 8)), on: { change: function (e) { if (e.target.checked) state.selected[s.id] = true; else delete state.selected[s.id]; renderSelection() } } }),
+      h('div', { class: 'main' }, h('div', { class: 'name', title: s.title }, s.title || '(no title)'), meta),
+      s.inUse ? h('span', { class: 'chip live', title: 'It is open in a running Claude Code session: it cannot be moved or deleted now' }, 'open now') : null,
+      h('div', { class: 'acts' }, openMenu(s),
+        h('button', { class: 'btn sm', type: 'button', disabled: s.inUse, on: { click: function () { askMove([s.id], s.title || s.id.slice(0, 8)) } } }, 'Move…'),
+        h('button', { class: 'btn sm', type: 'button', disabled: s.inUse, on: { click: function () { change({ kind: 'delete', ids: [s.id] }) } } }, 'Delete…')))
+  }
+  function groupFor(g) {
+    var head = h('div', { class: 'group-head' },
+      h('span', { class: 'path', title: g.folder }, g.folder || 'No folder recorded'),
+      g.state === 'missing' ? h('span', { class: 'chip clay', title: 'This folder is gone: the sessions are orphans' }, 'folder missing') : null,
+      g.state === 'unknown' ? h('span', { class: 'chip', title: 'No folder is recorded, or its drive is not here: never counted as an orphan' }, 'unknown folder') : null,
+      h('span', { class: 'chip num' }, plural(g.items.length, 'session', 'sessions')),
+      h('span', { class: 'chip num' }, bytes(g.bytes)),
+      g.folder ? h('button', { class: 'btn sm', type: 'button', title: 'Move every session of this project to another folder', on: { click: function () { askMoveProject(g.folder, g.items.length) } } }, 'Move project…') : null)
+    return h('section', { class: 'group' }, head, g.items.map(rowFor))
+  }
+  function render() {
+    var total = state.sessions.reduce(function (n, s) { return n + s.bytes }, 0)
+    $('summary').textContent = state.loaded ? plural(state.sessions.length, 'session', 'sessions') + ' · ' + bytes(total) + ' · ' + (state.orphans ? plural(state.orphans, 'orphan', 'orphans') + ' (their folder is gone)' : 'no orphans') : 'Loading…'
+    var prune = $('prune')
+    prune.hidden = !state.orphans
+    if (state.orphans) {
+      var ob = state.sessions.filter(function (s) { return s.folderState === 'missing' }).reduce(function (n, s) { return n + s.bytes }, 0)
+      prune.textContent = 'Delete ' + plural(state.orphans, 'orphan', 'orphans') + ' (' + bytes(ob) + ')…'
+    }
+    var list = $('list')
+    list.textContent = ''
+    var shown = visible()
+    if (!shown.length) list.appendChild(h('p', { class: 'empty' }, state.loaded ? 'No session matches.' : ''))
+    groups(shown).forEach(function (g) { list.appendChild(groupFor(g)) })
+    renderSelection()
+  }
+  function renderSelection() {
+    var ids = Object.keys(state.selected)
+    $('selbar').hidden = !ids.length
+    $('selcount').textContent = plural(ids.length, 'session', 'sessions') + ' selected'
+  }
+
+  // ---- the dialog ----
+  var dlg = $('dlg')
+  function openDialog(content) {
+    var body = $('dlg-body')
+    body.textContent = ''
+    content.forEach(function (c) { body.appendChild(c) })
+    if (!dlg.open) dlg.showModal()
+  }
+  function closeDialog() { if (dlg.open) dlg.close() }
+  dlg.addEventListener('click', function (e) { if (e.target === dlg) closeDialog() })
+  function title(text) { return h('h2', { class: 'serif', id: 'dlg-title' }, text) }
+
+  function askFolder(heading, text, placeholder, then) {
+    var input = h('input', { type: 'text', placeholder: placeholder, 'aria-label': 'Full path of the new folder', spellcheck: 'false', autocomplete: 'off' })
+    var go = function () { var v = input.value.trim(); if (v) then(v) }
+    input.addEventListener('keydown', function (e) { if (e.key === 'Enter') go() })
+    openDialog([title(heading), h('p', {}, text), input,
+      h('div', { class: 'foot' }, h('button', { class: 'btn', type: 'button', on: { click: closeDialog } }, 'Cancel'), h('button', { class: 'btn primary', type: 'button', on: { click: go } }, 'Preview'))])
+    input.focus()
+  }
+  var folderHint = function () { return state.platform === 'win32' ? 'D:\\Projects\\my-project' : '/home/me/projects/my-project' }
+  function askMove(ids, name) {
+    askFolder(ids.length === 1 ? 'Move "' + name + '"' : 'Move ' + plural(ids.length, 'session', 'sessions'), 'Type the full path of the folder it lives in now. The next step shows exactly what will change, and nothing changes before you confirm.', folderHint(), function (to) { change({ kind: 'move', ids: ids, to: to }) })
+  }
+  function askMoveProject(from, n) {
+    askFolder('Move this project', plural(n, 'session', 'sessions') + ' of ' + from + ' will follow the project to its new folder. Type the full path it is in now.', folderHint(), function (to) { change({ kind: 'move-project', from: from, to: to }) })
+  }
+
+  function summaryLine(plan) { return plural(plan.items.length, 'session', 'sessions') + ' · ' + bytes(plan.bytes) }
+  function headingFor(plan) {
+    var n = plan.items.length
+    if (plan.kind === 'prune') return 'Delete ' + plural(n, 'orphan session', 'orphan sessions') + '?'
+    if (plan.kind === 'delete') return 'Delete ' + plural(n, 'session', 'sessions') + '?'
+    return 'Move ' + plural(n, 'session', 'sessions') + '?'
+  }
+  function change(request) {
+    api('api/preview', request).then(function (r) {
+      var plan = r.data
+      if (!r.ok) return toast('That request was not accepted.')
+      var moving = plan.kind === 'move' || plan.kind === 'move-project'
+      if (plan.error) return openDialog([title('Nothing to do'), h('p', {}, plan.error), h('div', { class: 'foot' }, h('button', { class: 'btn', type: 'button', on: { click: closeDialog } }, 'Close'))])
+      var items = h('div', { class: 'list' }, plan.items.map(function (i) {
+        return h('div', { class: 'item' },
+          h('div', { class: 't' }, i.title || '(no title)'),
+          h('div', { class: 'p' }, i.id.slice(0, 8) + ' · ' + bytes(i.bytes) + ' · ' + (i.folder || 'no folder') + (moving ? '  →  ' + i.toFolder : '')),
+          i.problems.map(function (p) { return h('div', { class: 'bad' }, 'Cannot: ' + p) }))
+      }))
+      var note = moving
+        ? 'The rows of each session will point to the new folder. The new copy is written and checked first; only then does the old one go to the ' + trashName() + '.'
+        : 'They go to the ' + trashName() + ', so you can put them back from there. Their saved file history goes with them.'
+      var confirmBtn = h('button', { class: 'btn ' + (moving ? 'primary' : 'danger'), type: 'button', disabled: !plan.ok, on: { click: function () { apply(request, plan) } } }, (moving ? 'Move ' : 'Delete ') + summaryLine(plan))
+      var cancel = h('button', { class: 'btn', type: 'button', autofocus: true, on: { click: closeDialog } }, 'Cancel')
+      openDialog([title(headingFor(plan)), h('p', {}, summaryLine(plan)), items, h('div', { class: 'notice' }, note), h('div', { class: 'foot' }, cancel, confirmBtn)])
+      cancel.focus()
+    })
+  }
+  function apply(request, plan) {
+    openDialog([title('Working…'), h('p', {}, 'Please keep this page open.')])
+    api('api/apply', { request: request, code: plan.code }).then(function (r) {
+      var res = r.data
+      var failed = (res.results || []).filter(function (x) { return !x.ok })
+      if (r.ok && res.ok) { closeDialog(); toast(plural((res.results || []).length, 'session', 'sessions') + ' done.'); state.selected = {}; return load() }
+      var lines = res.error ? [h('div', { class: 'errors' }, res.error)] : []
+      failed.forEach(function (x) { lines.push(h('div', { class: 'errors' }, x.id.slice(0, 8) + ': ' + x.message)) })
+      openDialog([title('Not everything was done'), h('p', {}, (res.results || []).filter(function (x) { return x.ok }).length + ' done before it stopped.')].concat(lines, [h('div', { class: 'foot' }, h('button', { class: 'btn', type: 'button', on: { click: closeDialog } }, 'Close'))]))
+      load()
+    }).catch(function () { openDialog([title('Not connected'), h('p', {}, 'The page lost the server. Reopen it with /sessions.'), h('div', { class: 'foot' }, h('button', { class: 'btn', type: 'button', on: { click: closeDialog } }, 'Close'))]) })
+  }
+
+  // ---- controls ----
+  $('refresh').addEventListener('click', load)
+  $('q').addEventListener('input', function (e) { state.q = e.target.value; render() })
+  $('sort').addEventListener('change', function (e) { state.sort = e.target.value; render() })
+  $('prune').addEventListener('click', function () { change({ kind: 'prune' }) })
+  Array.prototype.forEach.call(document.querySelectorAll('[data-filter]'), function (b) {
+    b.addEventListener('click', function () {
+      state.filter = b.getAttribute('data-filter')
+      Array.prototype.forEach.call(document.querySelectorAll('[data-filter]'), function (x) { x.setAttribute('aria-pressed', x === b ? 'true' : 'false') })
+      render()
+    })
+  })
+  $('selmove').addEventListener('click', function () { askMove(Object.keys(state.selected), '') })
+  $('seldelete').addEventListener('click', function () { change({ kind: 'delete', ids: Object.keys(state.selected) }) })
+  $('selclear').addEventListener('click', function () { state.selected = {}; render() })
+
+  function setTheme(mode) {
+    if (mode === 'auto') document.documentElement.removeAttribute('data-theme')
+    else document.documentElement.setAttribute('data-theme', mode)
+    Array.prototype.forEach.call(document.querySelectorAll('[data-theme-set]'), function (b) { b.setAttribute('aria-pressed', b.getAttribute('data-theme-set') === mode ? 'true' : 'false') })
+    try { localStorage.setItem('session-manager-theme', mode) } catch (e) { /* a private window: the choice is just not kept */ }
+  }
+  Array.prototype.forEach.call(document.querySelectorAll('[data-theme-set]'), function (b) { b.addEventListener('click', function () { setTheme(b.getAttribute('data-theme-set')) }) })
+  try { setTheme(localStorage.getItem('session-manager-theme') || 'auto') } catch (e) { setTheme('auto') }
+
+  load()
+})()
+</script>
+</body>
+</html>
