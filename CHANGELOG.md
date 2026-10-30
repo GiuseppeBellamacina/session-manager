@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.1
+
+- A session whose file is already in the new folder's project folder (a project folder moved by hand) but whose rows still name the old folder can now be moved: only the rows change, the old file goes to the trash. Before, it was refused as "already in that folder".
+- Checkboxes in the page match the style (clay, rounded, with a tick).
+
 ## 0.1.0
 
 The first version.
