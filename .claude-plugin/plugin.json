@@ -1,0 +1,14 @@
+{
+  "name": "session-manager",
+  "displayName": "Session Manager",
+  "version": "0.1.0",
+  "description": "See every Claude Code session on your computer, open one, move it (or a whole project) to another folder when the project moved, and delete sessions or all the orphans, always with a preview and a confirmation. A page in the style of omniboard, or /sessions commands.",
+  "author": {
+    "name": "Giuseppe Bellamacina",
+    "url": "https://github.com/GiuseppeBellamacina"
+  },
+  "homepage": "https://github.com/GiuseppeBellamacina/session-manager",
+  "repository": "https://github.com/GiuseppeBellamacina/session-manager",
+  "license": "MIT",
+  "keywords": ["sessions", "resume", "cleanup", "projects", "productivity", "mod"]
+}

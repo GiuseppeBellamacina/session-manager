@@ -1,0 +1,18 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "session-manager",
+  "description": "Session Manager: every Claude Code session on your computer, moved or deleted with a confirmation.",
+  "owner": {
+    "name": "Giuseppe Bellamacina",
+    "url": "https://github.com/GiuseppeBellamacina"
+  },
+  "plugins": [
+    {
+      "name": "session-manager",
+      "description": "See every Claude Code session on your computer, open one, move it (or a whole project) to another folder, and delete sessions or the orphans, always with a preview and a confirmation.",
+      "source": "./",
+      "category": "productivity",
+      "keywords": ["sessions", "resume", "cleanup", "projects", "mod"]
+    }
+  ]
+}

@@ -1,0 +1,2 @@
+# Scripts and data must keep Unix line endings, whatever system they were checked out on.
+*.mjs text eol=lf
